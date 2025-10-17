@@ -1,0 +1,65 @@
+name: "Vprofile IAC"
+on:
+  push:
+    branches:
+      - main
+      - stage
+    paths:  
+      - terraform/**   #any changes in this folder workflow will get triggered
+  pull_request:
+    branches:
+      - main
+    paths:
+      - terraform/**
+
+env:     #variables
+ # Credentials for deployment to AWS
+ AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}  #secretkey stored in github
+ AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+ # S3 bucket for the Terraform state
+ BUCKET_TF_STATE: ${{ secrets.BUCKET_TF_STATE}}
+ AWS_REGION: us-east-2
+ EKS_CLUSTER: vprofile-eks
+
+jobs:
+   terraform:   #name of the job
+     name: "Apply terraform code changes"
+     runs-on: ubuntu-latest   #workflow runs on runners(creates container with ubuntu image)
+     defaults:
+       run:
+         shell: bash
+         working-directory: ./terraform
+
+     steps:
+       - name: Checkout source code 
+         uses: actions/checkout@v4  #from git hub market place which checks out the code
+
+         #installing terraform
+       - name: Setup Terraform with specified version on the runner
+         uses: hashicorp/setup-terraform@v2
+         #with:
+         #  terraform_version: 1.6.3
+
+       - name: Terraform init
+         #id we can use later
+         id: init
+         run: terraform init -backend-config="bucket=$BUCKET_TF_STATE"
+         #stores all the info in bucket
+
+       - name: Terraform format
+         id: fmt
+         run: terraform fmt -check
+
+       - name: Terraform validate
+         id: validate
+         run: terraform validate
+
+       - name: Terraform plan
+         id: plan
+         #out put stored in planfile and will be used in apply
+         run: terraform plan -no-color -input=false -out planfile
+         continue-on-error: true
+
+       - name: Terraform plan status
+         if: steps.plan.outcome == 'failure' 
+         run: exit 1     
