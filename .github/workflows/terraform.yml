@@ -5,14 +5,16 @@ on:
       - main
       - stage
     paths:  
-      - terraform/**   #any changes in this folder workflow will get triggered
+      - terraform/**
+    #any changes in this folder workflow will get triggered
   pull_request:
     branches:
       - main
     paths:
       - terraform/**
 
-env:     #variables
+#variables
+env:
  # Credentials for deployment to AWS
  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}  #secretkey stored in github
  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -22,9 +24,11 @@ env:     #variables
  EKS_CLUSTER: vprofile-eks
 
 jobs:
-   terraform:   #name of the job
+   #name of the job
+   terraform:
      name: "Apply terraform code changes"
-     runs-on: ubuntu-latest   #workflow runs on runners(creates container with ubuntu image)
+     #workflow runs on runners(creates container with ubuntu image)
+     runs-on: ubuntu-latest
      defaults:
        run:
          shell: bash
@@ -32,7 +36,8 @@ jobs:
 
      steps:
        - name: Checkout source code 
-         uses: actions/checkout@v4  #from git hub market place which checks out the code
+         #from git hub market place which checks out the code
+         uses: actions/checkout@v4
 
          #installing terraform
        - name: Setup Terraform with specified version on the runner
